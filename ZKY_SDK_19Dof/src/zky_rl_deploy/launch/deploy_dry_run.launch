@@ -1,0 +1,52 @@
+<launch>
+  <!-- Stage 0 / 7.1 离线 dry_run 入口：
+       默认只启动 zky_deploy_node，并保持 dry_run_only=true、shadow_mode=true；
+       不启动 motor_control，不写真实 /motor_params，只用于参数、观测、状态机和诊断链路检查。 -->
+
+  <arg name="deploy_defaults_file" default="$(find zky_rl_deploy)/config/deploy_defaults.yaml" />
+  <arg name="config_root" default="$(find zky_rl_deploy)/config" />
+  <arg name="stage_name" default="stage0_software" />
+  <arg name="enable_motor_output" default="false" />
+  <arg name="publish_shadow" default="true" />
+  <arg name="launch_joy_node" default="true" />
+  <arg name="joy_dev" default="/dev/input/js0" />
+  <arg name="joy_deadzone" default="0.05" />
+  <arg name="joy_autorepeat_rate" default="20.0" />
+  <arg name="joy_coalesce_interval" default="0.001" />
+  <arg name="joy_topic" default="/joy" />
+
+  <!-- 如需并行带起硬件侧和 RViz，请显式打开这个参数。
+       该 include 会调用 motor_control 的 rviz_display.launch，它内部会启动电机节点、T265 和 RViz，
+       因此默认必须关闭，避免在 dry_run 阶段自动接入真实硬件。 -->
+  <arg name="include_motor_control_rviz_bringup" default="false" />
+  <arg name="ethercat_interface" default="enp100s0" />
+
+  <include if="$(arg include_motor_control_rviz_bringup)"
+           file="$(find motor_control)/launch/rviz_display.launch">
+    <arg name="ethercat_interface" value="$(arg ethercat_interface)" />
+  </include>
+
+  <!-- dry_run 也需要显式拉起 /joy，避免只启动部署节点却忘了手柄输入链路。 -->
+  <include if="$(arg launch_joy_node)"
+           file="$(find zky_rl_deploy)/launch/includes/joy.launch">
+    <arg name="joy_dev" value="$(arg joy_dev)" />
+    <arg name="joy_deadzone" value="$(arg joy_deadzone)" />
+    <arg name="joy_autorepeat_rate" value="$(arg joy_autorepeat_rate)" />
+    <arg name="joy_coalesce_interval" value="$(arg joy_coalesce_interval)" />
+    <arg name="joy_topic" value="$(arg joy_topic)" />
+  </include>
+
+  <node pkg="zky_rl_deploy" type="zky_deploy_node" name="zky_deploy_node" output="screen">
+    <!-- 先装载最小默认参数，再用显式 param 覆盖本 launch 关心的安全开关，避免文件顺序变化影响结果。 -->
+    <rosparam command="load" file="$(arg deploy_defaults_file)" />
+
+    <!-- 这些参数只描述 dry_run/shadow 目标与配置路径，不会绕过节点内部的 shadow-only 安全锁。 -->
+    <param name="config_namespace" value="/zky_rl_deploy" />
+    <param name="config_root" value="$(arg config_root)" />
+    <param name="dry_run_only" value="true" />
+    <param name="shadow_mode" value="true" />
+    <param name="desired_stage_name" value="$(arg stage_name)" />
+    <param name="enable_motor_output" value="$(arg enable_motor_output)" />
+    <param name="publish_shadow" value="$(arg publish_shadow)" />
+  </node>
+</launch>

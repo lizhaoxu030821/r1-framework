@@ -1,0 +1,54 @@
+<launch>
+  <!-- Stage 4 / 5 静态站立入口：
+       适用于 stand 插值和站立保持链路联调。当前参数默认请求 active hardware，
+       但真实 /motor_params 仍必须通过 StageManager、SensorSync、ActiveOutputGate、
+       SafetyGate 和 FSM 联锁才会发布。 -->
+
+  <arg name="deploy_defaults_file" default="$(find zky_rl_deploy)/config/deploy_defaults.yaml" />
+  <arg name="config_root" default="$(find zky_rl_deploy)/config" />
+  <arg name="stage_name" default="stage4_suspended_single_leg_static" />
+  <arg name="enable_motor_output" default="true" />
+  <arg name="dry_run_only" default="false" />
+  <arg name="shadow_mode" default="false" />
+  <arg name="publish_shadow" default="true" />
+  <arg name="launch_joy_node" default="true" />
+  <arg name="joy_dev" default="/dev/input/js0" />
+  <arg name="joy_deadzone" default="0.05" />
+  <arg name="joy_autorepeat_rate" default="20.0" />
+  <arg name="joy_coalesce_interval" default="0.001" />
+  <arg name="joy_topic" default="/joy" />
+
+  <!-- 需要同时查看底层 joint_states/T265/RViz 时，可显式打开该 include；
+       它会启动 motor_control 的 rviz_display.launch，因此默认保持 false。 -->
+  <arg name="include_motor_control_rviz_bringup" default="true" />
+  <arg name="ethercat_interface" default="enp100s0" />
+
+  <include if="$(arg include_motor_control_rviz_bringup)"
+           file="$(find motor_control)/launch/rviz_display.launch">
+    <arg name="ethercat_interface" value="$(arg ethercat_interface)" />
+  </include>
+
+  <!-- 站立链路联调也必须带上 /joy，避免状态机入口没有真实手柄源。 -->
+  <include if="$(arg launch_joy_node)"
+           file="$(find zky_rl_deploy)/launch/includes/joy.launch">
+    <arg name="joy_dev" value="$(arg joy_dev)" />
+    <arg name="joy_deadzone" value="$(arg joy_deadzone)" />
+    <arg name="joy_autorepeat_rate" value="$(arg joy_autorepeat_rate)" />
+    <arg name="joy_coalesce_interval" value="$(arg joy_coalesce_interval)" />
+    <arg name="joy_topic" value="$(arg joy_topic)" />
+  </include>
+
+  <node pkg="zky_rl_deploy" type="zky_deploy_node" name="zky_deploy_node" output="screen">
+    <rosparam command="load" file="$(arg deploy_defaults_file)" />
+
+    <!-- 只有 dry_run_only:=false shadow_mode:=false enable_motor_output:=true
+         并满足 StageManager、SensorSync 与 SafetyGate 联锁时，节点才会真实发布 /motor_params。 -->
+    <param name="config_namespace" value="/zky_rl_deploy" />
+    <param name="config_root" value="$(arg config_root)" />
+    <param name="dry_run_only" value="$(arg dry_run_only)" />
+    <param name="shadow_mode" value="$(arg shadow_mode)" />
+    <param name="desired_stage_name" value="$(arg stage_name)" />
+    <param name="enable_motor_output" value="$(arg enable_motor_output)" />
+    <param name="publish_shadow" value="$(arg publish_shadow)" />
+  </node>
+</launch>

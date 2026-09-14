@@ -1,0 +1,9 @@
+# 该配置文件只服务于包骨架阶段，默认强制节点停留在 dry_run/shadow，
+# 目的是先把部署链路的参数命名空间和启动方式固定下来，不向硬件发布控制命令。
+config_namespace: /zky_rl_deploy
+dry_run_only: true
+shadow_mode: true
+enable_motor_output: false
+publish_shadow: true
+# 默认停留在 Stage 0，只有显式切到更高 stage 且联锁满足时才允许进入更深的 shadow 检查。
+desired_stage_name: stage0_software

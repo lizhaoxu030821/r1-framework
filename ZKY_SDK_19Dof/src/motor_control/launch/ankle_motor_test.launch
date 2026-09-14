@@ -1,0 +1,39 @@
+<launch>
+  <!-- 
+    脚踝电机测试 Launch 文件
+    使用方法:
+      1. 测试左腿脚踝: roslaunch motor_control ankle_motor_test.launch
+      2. 测试右腿脚踝: roslaunch motor_control ankle_motor_test.launch test_leg:=right
+      3. 自定义网络接口: roslaunch motor_control ankle_motor_test.launch ethercat_interface:=enp0s1
+  -->
+
+  <!-- 参数配置 -->
+  <arg name="test_leg" default="left" doc="要测试的腿: left 或 right"/>
+  <arg name="ethercat_interface" default="enp100s0" doc="EtherCAT 网络接口名称"/>
+
+  <!-- 启动脚踝电机测试节点 -->
+  <node 
+    name="ankle_motor_test" 
+    pkg="motor_control" 
+    type="ankle_motor_test" 
+    output="screen"
+    required="true">
+    
+    <!-- 设置参数 -->
+    <param name="test_leg" value="$(arg test_leg)"/>
+    <param name="ethercat_interface" value="$(arg ethercat_interface)"/>
+  </node>
+
+  <!-- 显示启动信息 -->
+  <node name="test_info" pkg="rostopic" type="rostopic" 
+        args="echo /rosout"
+        output="screen"
+        launch-prefix="bash -c 'sleep 1; echo ======================================; 
+                                            echo 脚踝电机测试已启动; 
+                                            echo 测试腿: $(arg test_leg); 
+                                            echo EtherCAT接口: $(arg ethercat_interface); 
+                                            echo ======================================; 
+                                            exec $0 $@'"/>
+
+</launch>
+

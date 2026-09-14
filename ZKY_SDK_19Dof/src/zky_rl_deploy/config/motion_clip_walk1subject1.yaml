@@ -1,0 +1,43 @@
+# 该文件定义 BeyondMimic 所使用 motion clip 的窗口和掉帧策略。
+# 安全约束：第一版上机禁止 catchup 追帧，掉帧默认 hold，超过阈值必须退出到 PASSIVE。
+
+motion_clip:
+  path: resources/motion/zky/npz/walk1_subject1.npz
+  npz_contains_joint_names: false
+  npz_order_source: "robot_joints.yaml:npz_order"
+
+  # 2026-06-08 Stage 7 首次 1 s 真输出建议窗口：
+  # 保持动作最前段作为 BACK 后进入功能态的站立入口；节点只会在进入 BEYOND_MIMIC_ARMED 时 reset 到窗口起点，
+  # 自动切到 BEYOND_MIMIC_ACTIVE 时不会再次 reset，相当于先在 ARMED 中消耗前 200 个 shadow cycles，
+  # 第一次真输出会自然落到更稳定的前段直线行走区间。
+  # 2026-06-08 现场复核发现，当前 BACK 姿态对 frame 0 的入口误差会偶发落到 0.20 rad 阈值之外；
+  # 这里把窗口微移到 frame 1 -> 479，仍保持同一段起步/直线行走，但可避免 frame 0 的边界拒绝。
+  # end_frame 取 479，既能覆盖 Stage 7 的 200-cycle armed + 1 s active 首测，又把 loop wrap 控制在约 0.190 rad。
+  start_frame: 1
+  end_frame: 479
+  clip_stride: 1
+  loop: true
+  playback_rate: 1.0
+
+  # 进入功能态时先把相位重置到窗口起点，避免直接接入未知相位造成大关节误差。
+  phase_reset_on_enter_function: true
+  pause_supported: true
+  resume_supported: true
+
+  max_frame_jump: 1
+  stale_frame_behavior: hold
+  max_consecutive_stale_frames: 3
+  max_hold_time_ms: 100
+
+  entry:
+    # 2026-06-08 现场复核时，当前 BACK 站姿对 frame 1 的入口误差在 0.20 rad 阈值内；
+    # 这里保留 0.20 rad 作为 Stage 7 首测阈值，但只要窗口或站姿基准再变化，就必须重新复核。
+    clip_entry_joint_error_rad: 0.20
+    reject_if_window_start_too_far: true
+
+  runtime_checks:
+    reject_if_npz_dimension_mismatch: true
+    reject_if_npz_order_missing: true
+    reject_catchup_on_hardware_stage: true
+    log_stale_frame_count: true
+    log_max_frame_jump_observed: true

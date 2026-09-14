@@ -1,0 +1,61 @@
+# 该文件描述 walk1_subject1 ONNX 策略的运行契约。
+# 安全约束：joint_names/action_scale/default_joint_pos/joint_stiffness/joint_damping 的权威来源是 ONNX metadata，
+# 运行时只能把这里当作人工审阅副本和一致性断言，不能用 YAML 覆盖 metadata。
+
+policy:
+  path: ref/policy_walk1subject1_260327.onnx
+  control_hz: 50
+  nominal_control_period_ms: 20
+  last_action_init: zeros
+  onnx_metadata_is_authority: true
+  action_scale_source: onnx_metadata
+  default_joint_pos_source: onnx_metadata
+  joint_stiffness_source: onnx_metadata
+  joint_damping_source: onnx_metadata
+  reject_startup_if_yaml_mismatch: true
+
+io_contract:
+  # 69 维观测契约必须与 ref/sim2sim_mimic.py 一致。
+  obs_input_name: obs
+  obs_input_dim: 69
+  time_step_input_name: time_step
+  time_step_input_dim: 1
+  action_output_name: actions
+  action_output_dim: 12
+  time_step_unit_s: 0.02
+
+runtime_constraints:
+  require_robot_joints_policy_order_match: true
+  forbid_yaml_override_of_metadata: true
+  require_last_action_zero_bootstrap: true
+  require_metadata_fields:
+    - joint_names
+    - action_scale
+    - default_joint_pos
+    - joint_stiffness
+    - joint_damping
+
+metadata_audit_copy:
+  # 这里保留 baseline 已核对的 metadata 副本，便于离线审查；
+  # 若运行时解析到的 metadata 与这里不一致，程序必须拒绝启动并打印差异。
+  joint_names:
+    - left_hip_yaw_joint
+    - right_hip_yaw_joint
+    - left_hip_roll_joint
+    - right_hip_roll_joint
+    - left_hip_pitch_joint
+    - right_hip_pitch_joint
+    - left_knee_joint
+    - right_knee_joint
+    - left_ankle_pitch_joint
+    - right_ankle_pitch_joint
+    - left_ankle_roll_joint
+    - right_ankle_roll_joint
+  action_scale: [0.038, 0.038, 0.042, 0.042, 0.083, 0.083, 0.083, 0.083, 0.025, 0.025, 0.025, 0.025]
+  joint_stiffness: [200.0, 200.0, 300.0, 300.0, 300.0, 300.0, 300.0, 300.0, 200.0, 200.0, 200.0, 200.0]
+  joint_damping: [0.037, 0.037, 0.123, 0.123, 0.120, 0.120, 0.120, 0.120, 0.031, 0.031, 0.031, 0.031]
+  default_joint_pos: [0.0, 0.0, 0.0, 0.0, -0.2, 0.2, 0.5, -0.5, 0.3, -0.3, 0.0, 0.0]
+
+debug_outputs:
+  keep_metadata_diff_log: true
+  publish_first_frame_last_action_summary: true

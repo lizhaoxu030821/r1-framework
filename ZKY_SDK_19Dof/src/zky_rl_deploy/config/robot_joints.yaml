@@ -1,0 +1,123 @@
+# 该文件定义部署链路中所有关节顺序与符号约定。
+# 安全约束：任何数组都不得直接假定“当前位置就是正确关节”，必须先通过关节名映射到目标顺序。
+# 运行时以 ONNX metadata 的 joint_names 作为 policy_order 权威来源；本文件只提供人工审阅副本和一致性断言。
+
+policy_order_authority: onnx_metadata
+reject_startup_if_policy_order_mismatch: true
+reject_active_function_if_joint_name_missing_or_duplicated: true
+
+policy_order:
+  - left_hip_yaw_joint
+  - right_hip_yaw_joint
+  - left_hip_roll_joint
+  - right_hip_roll_joint
+  - left_hip_pitch_joint
+  - right_hip_pitch_joint
+  - left_knee_joint
+  - right_knee_joint
+  - left_ankle_pitch_joint
+  - right_ankle_pitch_joint
+  - left_ankle_roll_joint
+  - right_ankle_roll_joint
+
+# 当前 motor_control 的 joint_states 顺序与 JOINT_NAMES 一致；
+# 后续若底层发布顺序变化，必须只修改这里和单元测试，不能在代码里散落硬编码索引。
+ros_joint_order:
+  - left_hip_yaw_joint
+  - left_hip_roll_joint
+  - left_hip_pitch_joint
+  - left_knee_joint
+  - left_ankle_pitch_joint
+  - left_ankle_roll_joint
+  - right_hip_yaw_joint
+  - right_hip_roll_joint
+  - right_hip_pitch_joint
+  - right_knee_joint
+  - right_ankle_pitch_joint
+  - right_ankle_roll_joint
+
+# 当前样机/XML 顺序与 /motor_params 关节空间顺序一致。
+hardware_order:
+  - left_hip_yaw_joint
+  - left_hip_roll_joint
+  - left_hip_pitch_joint
+  - left_knee_joint
+  - left_ankle_pitch_joint
+  - left_ankle_roll_joint
+  - right_hip_yaw_joint
+  - right_hip_roll_joint
+  - right_hip_pitch_joint
+  - right_knee_joint
+  - right_ankle_pitch_joint
+  - right_ankle_roll_joint
+
+# 单独保留 motor_params_order，防止未来硬件接口解耦后误以为它天然等于 hardware_order。
+motor_params_order:
+  - left_hip_yaw_joint
+  - left_hip_roll_joint
+  - left_hip_pitch_joint
+  - left_knee_joint
+  - left_ankle_pitch_joint
+  - left_ankle_roll_joint
+  - right_hip_yaw_joint
+  - right_hip_roll_joint
+  - right_hip_pitch_joint
+  - right_knee_joint
+  - right_ankle_pitch_joint
+  - right_ankle_roll_joint
+
+# 当前 walk1_subject1.npz 未自带关节名字段，因此必须显式声明存储顺序。
+npz_order:
+  - left_hip_yaw_joint
+  - right_hip_yaw_joint
+  - left_hip_roll_joint
+  - right_hip_roll_joint
+  - left_hip_pitch_joint
+  - right_hip_pitch_joint
+  - left_knee_joint
+  - right_knee_joint
+  - left_ankle_pitch_joint
+  - right_ankle_pitch_joint
+  - left_ankle_roll_joint
+  - right_ankle_roll_joint
+
+sign_convention:
+  # +1 表示反馈/命令正方向与 URDF/训练正方向一致；-1 表示相反。
+  # 第一版先按 baseline 假设全为 +1，但未完成 Stage 3 单关节验证前不得放开 ACTIVE_FUNCTION。
+  left_hip_yaw_joint: 1
+  left_hip_roll_joint: 1
+  left_hip_pitch_joint: 1
+  left_knee_joint: 1
+  left_ankle_pitch_joint: 1
+  left_ankle_roll_joint: 1
+  right_hip_yaw_joint: 1
+  right_hip_roll_joint: 1
+  right_hip_pitch_joint: 1
+  right_knee_joint: 1
+  right_ankle_pitch_joint: 1
+  right_ankle_roll_joint: 1
+
+sign_verification:
+  require_verified_for_active_function: true
+  joints:
+    left_hip_yaw_joint: true
+    left_hip_roll_joint: true
+    left_hip_pitch_joint: true
+    left_knee_joint: true
+    left_ankle_pitch_joint: true
+    left_ankle_roll_joint: true
+    right_hip_yaw_joint: true
+    right_hip_roll_joint: true
+    right_hip_pitch_joint: true
+    right_knee_joint: true
+    right_ankle_pitch_joint: true
+    right_ankle_roll_joint: true
+
+consistency_checks:
+  require_same_joint_set_across_orders: true
+  reject_if_npz_dimension_mismatch: true
+  reject_if_missing_explicit_npz_order: true
+  unit_tests_required:
+    - policy_to_hardware_to_policy_roundtrip
+    - npz_to_policy_reorder
+    - sign_convention_application

@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- 包含 realsense2_camera 的 rs_t265.launch 文件 -->
+  <include file="$(find realsense2_camera)/launch/rs_t265.launch"/>
+  <!-- <include file="$(find realsense2_camera)/launch/rs_t265.launch">
+    <arg name="publish_odom_tf" value="false"/>
+  </include> -->
+
+  <arg name="ethercat_interface" default="enp100s0" />
+
+  <node pkg="motor_control" type= "motor_control" name= "motor_control" output="screen" >
+      <param name="ethercat_interface" type="string" value="$(arg ethercat_interface)" />
+  </node>
+  <!-- 启动 robot_state_publisher：根据 joint_states 和 URDF 发布机器人各个关节之间的 TF -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+    <param name="publish_frequency" value="50.0" />
+  </node>
+  <!-- 参数：URDF 文件路径。19 DOF 可视化默认加载上肢/腰部模型资源。 -->
+  <arg name="urdf_path" default="$(find motor_control)/../../resources/robots/robot_zky_19dof/urdf/robot_zky_fixed_all.urdf" />
+  <arg name="rviz_config" default="$(find motor_control)/rviz/robot_display.rviz" />
+  
+  <!-- 加载机器人描述到参数服务器 -->
+  <param name="robot_description" command="cat $(arg urdf_path)" />
+  
+  <!-- 启动 RViz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_config)" output="screen" required="true" />
+  
+  <!-- 静态TF发布器配置 -->
+  <!-- 参数格式：x y z qx qy qz qw parent_frame child_frame period_ms -->
+  
+  <!-- 发布 world_link -> odom 的静态TF -->
+  <node pkg="tf" type="static_transform_publisher" name="world_to_odom" 
+       args="0 0 0 0 0 0 1 world_link odom 100" />
+  
+  <!-- 19 DOF URDF 的根链接已经是 base_link，不再需要旧版 base_link -> pelvis 静态TF。 -->
+  
+  <!-- 发布 base_link -> camera_link 的静态TF（将相机固定在机器人上） -->
+  <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera" 
+       args="0 0 0.1 0 0 0 1 base_link camera_link 100" /> -->
+  
+  <!-- motor_control节点发布 odom -> base_link 的动态TF（位置来自T265，姿态来自IMU） -->
+</launch>
+

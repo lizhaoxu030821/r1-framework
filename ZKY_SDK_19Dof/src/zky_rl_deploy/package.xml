@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>zky_rl_deploy</name>
+  <version>0.0.0</version>
+  <description>Minimal deployment skeleton for the ZKY RL integration pipeline.</description>
+
+  <maintainer email="tib@todo.todo">tib</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- 第一阶段只引入最小 ROS 依赖，先保证部署骨架可编译且不改变当前硬件控制行为。 -->
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_export_depend>nav_msgs</build_export_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>sensor_msgs</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>joy</exec_depend>
+
+  <!-- 先声明测试依赖占位，后续补充关节顺序、观测构造和安全门控等单元测试。 -->
+  <test_depend>rosunit</test_depend>
+
+  <export>
+    <!-- 骨架阶段不导出额外插件或硬件接口，避免让 motor_control 行为产生隐式变化。 -->
+  </export>
+</package>

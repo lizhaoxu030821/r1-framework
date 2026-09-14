@@ -1,0 +1,112 @@
+# 该文件定义 bringup 阶段输出联锁。
+# 安全约束：输出等级只能逐级增加，且必须由 StageManager 与 SafetySupervisor 共同确认；
+# 禁止通过参数服务器单独放大 action_scale/kp_scale/kd_scale 绕过 shadow 检查。
+
+stage_rules:
+  monotonic_escalation_only: true
+  require_stage_manager_and_safety_supervisor_ack: true
+  require_passive_or_stand_hold_before_scale_up: true
+  min_shadow_cycles_before_active_function: 200
+
+stages:
+  stage0_software:
+    allow_motor_output: false
+    require_t265_verified: false
+    require_joint_sign_verified: false
+    require_npz_order_verified: false
+    action_scale: 0.0
+    kp_scale: 0.0
+    kd_scale: 0.0
+
+  stage1_ethercat_zero_output:
+    allow_motor_output: false
+    require_t265_verified: false
+    require_joint_sign_verified: false
+    require_npz_order_verified: false
+    action_scale: 0.0
+    kp_scale: 0.0
+    kd_scale: 0.0
+
+  stage2_passive_validation:
+    allow_motor_output: false
+    require_t265_verified: false
+    require_joint_sign_verified: false
+    require_npz_order_verified: false
+    allow_passive_request: true
+    action_scale: 0.0
+    kp_scale: 0.0
+    kd_scale: 0.0
+
+  stage3_single_joint:
+    allow_motor_output: true
+    require_t265_verified: false
+    require_joint_sign_verified: true
+    require_npz_order_verified: false
+    max_enabled_joints: 1
+    action_scale: 0.0
+    kp_scale: 0.2
+    kd_scale: 0.2
+
+  stage4_suspended_single_leg_static:
+    allow_motor_output: true
+    require_t265_verified: false
+    require_joint_sign_verified: true
+    require_npz_order_verified: false
+    max_enabled_joints: 6
+    action_scale: 0.0
+    kp_scale: 0.2
+    kd_scale: 0.2
+
+  stage5_suspended_double_leg_static:
+    allow_motor_output: true
+    require_t265_verified: false
+    require_joint_sign_verified: true
+    require_npz_order_verified: false
+    action_scale: 0.0
+    # 首次双腿静态站立只放开“启用关节数”，不同时放大 PD 增益。
+    # stage4 已用 0.2/0.2 验证单腿链路，双腿稳定后再单独提高到 0.3。
+    kp_scale: 0.2
+    kd_scale: 0.2
+
+  stage6_shadow:
+    allow_motor_output: false
+    require_t265_verified: true
+    require_joint_sign_verified: true
+    require_npz_order_verified: true
+    min_shadow_cycles_without_fault: 200
+    action_scale: 0.1
+    kp_scale: 0.0
+    kd_scale: 0.0
+
+  stage7_suspended_beyond_mimic:
+    allow_motor_output: true
+    require_t265_verified: true
+    require_joint_sign_verified: true
+    require_npz_order_verified: true
+    require_shadow_cycles_without_fault: 200
+    action_scale: 0.05
+    kp_scale: 0.2
+    kd_scale: 0.2
+    max_run_time_s: 1.0
+
+  stage8_partial_weight_bearing:
+    allow_motor_output: true
+    require_t265_verified: true
+    require_joint_sign_verified: true
+    require_npz_order_verified: true
+    require_shadow_cycles_without_fault: 200
+    action_scale: 0.15
+    kp_scale: 0.35
+    kd_scale: 0.35
+    max_run_time_s: 5.0
+
+  stage9_grounded_low_speed:
+    allow_motor_output: true
+    require_t265_verified: true
+    require_joint_sign_verified: true
+    require_npz_order_verified: true
+    require_shadow_cycles_without_fault: 200
+    action_scale: 0.2
+    kp_scale: 0.4
+    kd_scale: 0.4
+    max_run_time_s: 10.0

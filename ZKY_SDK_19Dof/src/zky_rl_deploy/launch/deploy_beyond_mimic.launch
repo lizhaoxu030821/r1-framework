@@ -1,0 +1,55 @@
+<launch>
+  <!-- Stage 6 / 7 BeyondMimic 入口：
+       默认仍使用 shadow gate，只允许在 /zky/shadow_motor_params 上观察 BeyondMimic 候选输出；
+       只有显式切到 dry_run_only:=false shadow_mode:=false，并满足所有联锁时，节点才会发布真实 /motor_params。 -->
+
+  <arg name="deploy_defaults_file" default="$(find zky_rl_deploy)/config/deploy_defaults.yaml" />
+  <arg name="config_root" default="$(find zky_rl_deploy)/config" />
+  <arg name="stage_name" default="stage7_suspended_beyond_mimic" />
+  <arg name="enable_motor_output" default="false" />
+  <arg name="dry_run_only" default="true" />
+  <arg name="shadow_mode" default="true" />
+  <arg name="publish_shadow" default="true" />
+  <arg name="launch_joy_node" default="true" />
+  <arg name="joy_dev" default="/dev/input/js0" />
+  <arg name="joy_deadzone" default="0.05" />
+  <arg name="joy_autorepeat_rate" default="20.0" />
+  <arg name="joy_coalesce_interval" default="0.001" />
+  <arg name="joy_topic" default="/joy" />
+
+  <!-- Stage 6/7 BeyondMimic 依赖 live /joint_states、/camera/odom/sample 和 /camera/imu；
+       因此默认带起 rviz_display.launch，让 motor_control/T265/RViz 链路随部署节点一起启动。
+       若只想单独重启部署节点而不触碰硬件侧链路，可显式传入 include_motor_control_rviz_bringup:=false。 -->
+  <arg name="include_motor_control_rviz_bringup" default="true" />
+  <arg name="ethercat_interface" default="enp100s0" />
+
+  <include if="$(arg include_motor_control_rviz_bringup)"
+           file="$(find motor_control)/launch/rviz_display.launch">
+    <arg name="ethercat_interface" value="$(arg ethercat_interface)" />
+  </include>
+
+  <!-- BeyondMimic 的功能切入完全依赖手柄语义，部署入口必须自带 joy_node。 -->
+  <include if="$(arg launch_joy_node)"
+           file="$(find zky_rl_deploy)/launch/includes/joy.launch">
+    <arg name="joy_dev" value="$(arg joy_dev)" />
+    <arg name="joy_deadzone" value="$(arg joy_deadzone)" />
+    <arg name="joy_autorepeat_rate" value="$(arg joy_autorepeat_rate)" />
+    <arg name="joy_coalesce_interval" value="$(arg joy_coalesce_interval)" />
+    <arg name="joy_topic" value="$(arg joy_topic)" />
+  </include>
+
+  <node pkg="zky_rl_deploy" type="zky_deploy_node" name="zky_deploy_node" output="screen">
+    <rosparam command="load" file="$(arg deploy_defaults_file)" />
+
+    <!-- 默认仍只做 shadow 候选输出检查。
+         若要尝试 Stage 7，除了 enable_motor_output:=true 外，还必须显式传入
+         dry_run_only:=false shadow_mode:=false，并满足 200 周期 shadow 联锁与额外 checklist。 -->
+    <param name="config_namespace" value="/zky_rl_deploy" />
+    <param name="config_root" value="$(arg config_root)" />
+    <param name="dry_run_only" value="$(arg dry_run_only)" />
+    <param name="shadow_mode" value="$(arg shadow_mode)" />
+    <param name="desired_stage_name" value="$(arg stage_name)" />
+    <param name="enable_motor_output" value="$(arg enable_motor_output)" />
+    <param name="publish_shadow" value="$(arg publish_shadow)" />
+  </node>
+</launch>

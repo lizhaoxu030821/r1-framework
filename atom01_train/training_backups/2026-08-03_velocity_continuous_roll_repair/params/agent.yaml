@@ -1,0 +1,60 @@
+seed: 42
+device: cuda:0
+num_steps_per_env: 24
+max_iterations: 30001
+empirical_normalization: false
+obs_groups: {}
+clip_actions: 100.0
+check_for_nan: true
+save_interval: 500
+experiment_name: zky
+run_name: velocity_continuous_roll_repair
+logger: tensorboard
+neptune_project: robolab
+wandb_project: zky
+resume: true
+load_run: ^2026-08-02_23-35-01_velocity_curriculum_2p5$
+load_checkpoint: ^model_37500\.pt$
+class_name: OnPolicyRunner
+actor: {}
+critic: {}
+algorithm:
+  class_name: PPO
+  num_learning_epochs: 5
+  num_mini_batches: 4
+  learning_rate: 0.0001
+  schedule: adaptive
+  gamma: 0.99
+  lam: 0.95
+  entropy_coef: 0.005
+  desired_kl: 0.008
+  max_grad_norm: 0.7
+  optimizer: adam
+  value_loss_coef: 1.0
+  use_clipped_value_loss: true
+  clip_param: 0.2
+  normalize_advantage_per_mini_batch: false
+  share_cnn_encoders: false
+  rnd_cfg: null
+  symmetry_cfg:
+    use_data_augmentation: true
+    use_mirror_loss: false
+    data_augmentation_func: robolab.tasks.direct.base.agents.atom01_agent_cfg:data_augmentation_func
+    mirror_loss_coeff: 0.0
+policy:
+  class_name: ActorCritic
+  init_noise_std: 1.0
+  noise_std_type: scalar
+  state_dependent_std: false
+  actor_obs_normalization: true
+  critic_obs_normalization: true
+  actor_hidden_dims:
+  - 512
+  - 256
+  - 128
+  critic_hidden_dims:
+  - 512
+  - 256
+  - 128
+  activation: elu
+runner_class_name: OnPolicyRunner

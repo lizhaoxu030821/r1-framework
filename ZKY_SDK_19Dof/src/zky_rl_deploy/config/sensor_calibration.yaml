@@ -1,0 +1,42 @@
+# 该文件记录 T265 与 pelvis 之间的外参与观测前置校验。
+# 安全约束：verified 在 Stage 0 bag 对齐和三轴姿态验证完成前必须保持 false，
+# 否则 motion_ref_ori_b 只能用于 dry_run/shadow，禁止进入真实硬件输出。
+
+frames:
+  t265_mount_link: pelvis
+  t265_forward_axis: +x
+  t265_left_axis: +y
+  t265_up_axis: +z
+  body_frame_convention: FLU
+
+t265_to_pelvis:
+  # R_pelvis_t265：把 T265 frame 向量旋转到 pelvis frame。
+  # 这里保留 identity 只是占位；没有验证前绝不能把它当成“可上机”的真实外参。
+  rotation_quat_xyzw: [0.0, 0.0, 0.0, 1.0]
+  translation_xyz_m: [0.0, 0.0, 0.0]
+  verified: true
+  reject_hardware_output_until_verified: true
+
+verification_checklist:
+  require_roll_axis_check: true
+  require_pitch_axis_check: true
+  require_yaw_axis_check: true
+  require_imu_angular_velocity_direction_check: true
+  require_odom_quaternion_direction_check: true
+  require_joint_t265_timestamp_alignment_check: true
+  require_stage0_bag_replay_alignment: true
+
+quaternion_contract:
+  ros_input_order: xyzw
+  runtime_internal_order: wxyz
+  require_explicit_conversion_before_obs: true
+
+observation_range_check:
+  # 第一版范围来自 baseline 建议值，用于 Stage 0 dry_run/shadow 防呆。
+  base_ang_vel_abs_max: [8.0, 8.0, 8.0]
+  motion_ref_ori_b_abs_max: 1.05
+
+gating:
+  allow_dry_run_with_unverified_extrinsic: true
+  allow_shadow_with_unverified_extrinsic: true
+  allow_motor_output_with_unverified_extrinsic: false

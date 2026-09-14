@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: robolab
+Version: 1.0.0
+License-File: LICENSE
+Requires-Dist: mujoco==3.3.3
+Requires-Dist: mujoco-python-viewer
+Requires-Dist: psutil
+Requires-Dist: joblib>=1.2.0
+Requires-Dist: pynput
+Dynamic: license-file
+Dynamic: requires-dist

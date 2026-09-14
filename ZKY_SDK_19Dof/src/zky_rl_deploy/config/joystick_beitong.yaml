@@ -1,0 +1,104 @@
+# 该文件定义北通手柄的语义映射与安全输入规则。
+# 安全约束：控制逻辑只能使用语义名，不能直接依赖按钮编号。
+# 若某个物理编号尚未实测，必须保持 null 并通过 TODO 提醒，不允许在代码中写死猜测值。
+
+device: beitong
+ros_topic: /joy
+
+mapping_status:
+  raw_indices_confirmed: true
+  note: "当前仓库未找到按钮/轴编号实测记录；先固化语义契约，编号待实机通过 /joy 回放确认。"
+
+buttons_semantic:
+  START: start_motor_enable
+  BACK: reset_initial_position
+  HOME: emergency_stop_zero_output
+
+estop_recover:
+  button: START
+  priority_below_home_estop: true
+  next_state: PRECHARGE
+
+function_guard:
+  button: RB
+  role: protect_abxy_function_switches
+  require_for_abxy_function_combo: true
+  require_for_start_back: false
+  release_action_after_entry: none
+
+buttons:
+  START:
+    raw_type: button
+    index: 7
+    confirmed: true
+    on_rising_edge: start_motor_enable
+  BACK:
+    raw_type: button
+    index: 6
+    confirmed: true
+    on_rising_edge: reset_initial_position
+  HOME:
+    raw_type: button
+    index: 8
+    confirmed: true
+    on_level_or_edge: emergency_stop_zero_output
+  RB:
+    raw_type: button
+    index: 5
+    confirmed: true
+    semantic: function_guard
+  A:
+    raw_type: button
+    index: 0
+    confirmed: true
+  X:
+    raw_type: button
+    index: 2
+    confirmed: true
+  B:
+    raw_type: button
+    index: 1
+    confirmed: true
+  Y:
+    raw_type: button
+    index: 3
+    confirmed: true
+  LB:
+    raw_type: button
+    index: 4
+    confirmed: true
+    semantic: output_scale_down
+
+function_combos:
+  "RB+A": beyond_mimic
+  "RB+X": reserved_function_1
+  "RB+B": reserved_function_2
+  "RB+Y": reserved_function_3
+
+axes:
+  left_stick_y:
+    raw_type: axis
+    index: 1
+    confirmed: true
+    semantic: clip_playback_rate
+  left_stick_x:
+    raw_type: axis
+    index: 0
+    confirmed: true
+    semantic: reserved_lateral_bias
+  right_stick_x:
+    raw_type: axis
+    index: 3
+    confirmed: true
+    semantic: reserved_yaw_bias
+  dpad_y:
+    raw_type: axis
+    index: 7
+    confirmed: true
+    semantic: clip_phase_step
+
+edge_policy:
+  home_accept_level_or_edge: true
+  start_back_and_function_use_rising_edge: true
+  ignore_abxy_without_rb: true
+  start_recovers_only_inside_zero_output_estop: true

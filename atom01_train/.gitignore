@@ -1,0 +1,30 @@
+# This repository is a curated local training record, not a checkout of all
+# simulator sources and generated artifacts.
+/*
+!/.gitignore
+!/ZKY_TRAINING_NOTES.md
+!/robolab/
+/robolab/*
+!/robolab/robolab/
+/robolab/robolab/*
+!/robolab/robolab/tasks/
+/robolab/robolab/tasks/*
+!/robolab/robolab/tasks/direct/
+/robolab/robolab/tasks/direct/*
+!/robolab/robolab/tasks/direct/base/
+/robolab/robolab/tasks/direct/base/*
+!/robolab/robolab/tasks/direct/base/atom01_env_cfg.py
+!/robolab/robolab/tasks/direct/base/base_config.py
+!/robolab/robolab/tasks/direct/base/base_env.py
+!/robolab/robolab/tasks/direct/base/agents/
+/robolab/robolab/tasks/direct/base/agents/*
+!/robolab/robolab/tasks/direct/base/agents/atom01_agent_cfg.py
+!/robolab/scripts/
+/robolab/scripts/*
+!/robolab/scripts/rsl_rl/
+/robolab/scripts/rsl_rl/*
+!/robolab/scripts/rsl_rl/train_zky_high_speed_curriculum.sh
+!/training_backups/
+/training_backups/*
+!/training_backups/2026-08-03_velocity_continuous_roll_repair/
+!/training_backups/2026-08-03_velocity_continuous_roll_repair/**

@@ -1,0 +1,54 @@
+# 该文件集中定义传感器同步、观测构造、功能切换保护键和控制周期的安全门限。
+# 安全约束：这里的阈值是部署层能否继续保持 ACTIVE_FUNCTION 的硬门槛，
+# 任何超限都必须先降级到 PASSIVE 或 ZERO_OUTPUT_ESTOP，而不是“继续试试看”。
+
+sensor_sync:
+  # 现场 Stage 7 suspended bringup 中，/joint_states 源头速率稳定在 500 Hz，
+  # 但 deploy 侧 callback freshness 会间歇抖到 20~36 ms；20 ms 会把正常 shadow
+  # 反复误判成 sensor timeout，导致 shadow_cycles_without_fault 永远攒不满 200。
+  # 这里先放宽到 40 ms，保留对真正停更/长时间卡顿的阻断，同时不绕过 200-cycle shadow 验证。
+  joint_state_timeout_ms: 40
+  t265_odom_timeout_ms: 40
+  t265_imu_timeout_ms: 20
+  sensor_sync_warn_dt_ms: 20
+  sensor_sync_passive_dt_ms: 40
+
+observation:
+  reject_nan_inf: true
+  reject_unverified_t265_extrinsic: true
+  reject_unverified_joint_sign: true
+  require_motion_ref_ori_formula_match_sim2sim: true
+
+beyond_mimic:
+  clip_entry_joint_error_rad: 0.1
+  stale_frame_behavior: hold
+  max_consecutive_stale_frames: 3
+  max_hold_time_ms: 100
+  passive_on_stale_limit_exceeded: true
+
+function_guard:
+  button: RB
+  purpose: protect_abxy_function_switches
+  require_for_active_hold: false
+  require_for_start_back: false
+  release_action_after_entry: none
+
+control_loop:
+  nominal_period_ms: 20
+  max_jitter_ms: 5
+  max_consecutive_overruns: 3
+  clock_source: steady_clock
+  sleep_strategy: sleep_until
+  passive_on_consecutive_overrun: true
+
+shadow_validation:
+  # Stage 6 以及进入任何真实 BeyondMimic 输出前，都必须先完成至少 200 个周期无异常 shadow。
+  min_cycles_without_fault: 200
+  require_before_active_function: true
+
+fault_response:
+  home_button_action: zero_output_estop
+  severe_fault_action: zero_output_estop
+  sensor_timeout_action: goto_passive
+  function_guard_release_action: none
+  output_nan_inf_action: zero_output_estop

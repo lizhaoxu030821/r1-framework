@@ -1,0 +1,25 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/tib/code/ZKY_SDK_19Dof/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/opt/openrobots/include/**",
+        "/home/tib/code/ZKY_SDK_19Dof/src/motor_control/include/**",
+        "/home/tib/code/ZKY_SDK_19Dof/src/realsense-ros/realsense2_camera/include/**",
+        "/home/tib/code/ZKY_SDK_19Dof/src/zky_rl_deploy/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

@@ -1,0 +1,17 @@
+# ROS/catkin build outputs
+.catkin_workspace
+build/
+devel/
+install/
+log/
+logs/
+
+# Runtime records
+record_data/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Local app build artifacts
+src/motor_control/app/build/

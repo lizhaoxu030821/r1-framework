@@ -1,0 +1,21 @@
+# 该文件允许部署时覆盖 BACK -> STAND_HOLD 的目标站姿。
+# 若不提供 override，则仍回退到 ONNX metadata.default_joint_pos。
+
+stand_pose:
+  # 2026-06-08 Stage 7 bringup:
+  # 这里直接对齐当前 motion clip 起点 frame 1，
+  # 让 BACK 后的站立目标和 BeyondMimic 入口姿态保持一致。
+  # 顺序必须严格为 policy_order。
+  policy_order_override:
+    - 0.079584
+    - 0.205277
+    - 0.052457
+    - -0.019919
+    - -0.015862
+    - -0.031373
+    - 0.250974
+    - -0.219171
+    - 0.133522
+    - -0.166021
+    - 0.0
+    - 0.0

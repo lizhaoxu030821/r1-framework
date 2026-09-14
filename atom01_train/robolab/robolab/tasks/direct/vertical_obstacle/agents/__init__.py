@@ -1,0 +1,2 @@
+from .vertical_obstacle_agent_cfg import VerticalObstacleAgentCfg
+

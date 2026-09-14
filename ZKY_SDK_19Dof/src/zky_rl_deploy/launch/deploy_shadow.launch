@@ -1,0 +1,51 @@
+<launch>
+  <!-- Stage 6 / 7.2 ROS shadow 入口：
+       默认仍只允许把候选命令发布到 /zky/shadow_motor_params 做诊断，
+       真实 /motor_params 继续保持关闭，适用于 clip 窗口、重排结果和 shadow 周期联锁检查。 -->
+
+  <arg name="deploy_defaults_file" default="$(find zky_rl_deploy)/config/deploy_defaults.yaml" />
+  <arg name="config_root" default="$(find zky_rl_deploy)/config" />
+  <arg name="stage_name" default="stage6_shadow" />
+  <arg name="enable_motor_output" default="false" />
+  <arg name="publish_shadow" default="true" />
+  <arg name="launch_joy_node" default="true" />
+  <arg name="joy_dev" default="/dev/input/js0" />
+  <arg name="joy_deadzone" default="0.05" />
+  <arg name="joy_autorepeat_rate" default="20.0" />
+  <arg name="joy_coalesce_interval" default="0.001" />
+  <arg name="joy_topic" default="/joy" />
+
+  <!-- 需要并行看电机反馈、T265 和 RViz 时，手动打开这个 include。
+       它会使用 motor_control/launch/rviz_display.launch 启动真实硬件侧节点，所以默认必须为 false。 -->
+  <arg name="include_motor_control_rviz_bringup" default="false" />
+  <arg name="ethercat_interface" default="enp100s0" />
+
+  <include if="$(arg include_motor_control_rviz_bringup)"
+           file="$(find motor_control)/launch/rviz_display.launch">
+    <arg name="ethercat_interface" value="$(arg ethercat_interface)" />
+  </include>
+
+  <!-- shadow bringup 同样依赖 /joy 输入做功能请求与安全链路，不再允许手动漏起。 -->
+  <include if="$(arg launch_joy_node)"
+           file="$(find zky_rl_deploy)/launch/includes/joy.launch">
+    <arg name="joy_dev" value="$(arg joy_dev)" />
+    <arg name="joy_deadzone" value="$(arg joy_deadzone)" />
+    <arg name="joy_autorepeat_rate" value="$(arg joy_autorepeat_rate)" />
+    <arg name="joy_coalesce_interval" value="$(arg joy_coalesce_interval)" />
+    <arg name="joy_topic" value="$(arg joy_topic)" />
+  </include>
+
+  <node pkg="zky_rl_deploy" type="zky_deploy_node" name="zky_deploy_node" output="screen">
+    <rosparam command="load" file="$(arg deploy_defaults_file)" />
+
+    <!-- 即使这里把 stage_name 设成 stage6_shadow，StageManager 仍会继续检查
+         T265/sign/npz 验证和逐级 stage 规则；launch 本身不能越权放大输出。 -->
+    <param name="config_namespace" value="/zky_rl_deploy" />
+    <param name="config_root" value="$(arg config_root)" />
+    <param name="dry_run_only" value="true" />
+    <param name="shadow_mode" value="true" />
+    <param name="desired_stage_name" value="$(arg stage_name)" />
+    <param name="enable_motor_output" value="$(arg enable_motor_output)" />
+    <param name="publish_shadow" value="$(arg publish_shadow)" />
+  </node>
+</launch>

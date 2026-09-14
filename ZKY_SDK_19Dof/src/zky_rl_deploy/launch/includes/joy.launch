@@ -1,0 +1,16 @@
+<launch>
+  <!-- 默认随部署入口一起拉起手柄节点；如需复用外部 joy_node，可在上层 launch 里关闭 include。 -->
+  <arg name="joy_dev" default="/dev/input/js0" />
+  <arg name="joy_deadzone" default="0.05" />
+  <arg name="joy_autorepeat_rate" default="20.0" />
+  <arg name="joy_coalesce_interval" default="0.001" />
+  <arg name="joy_topic" default="/joy" />
+
+  <node pkg="joy" type="joy_node" name="joy_node" output="screen">
+    <param name="dev" value="$(arg joy_dev)" />
+    <param name="deadzone" value="$(arg joy_deadzone)" />
+    <param name="autorepeat_rate" value="$(arg joy_autorepeat_rate)" />
+    <param name="coalesce_interval" value="$(arg joy_coalesce_interval)" />
+    <remap from="joy" to="$(arg joy_topic)" />
+  </node>
+</launch>

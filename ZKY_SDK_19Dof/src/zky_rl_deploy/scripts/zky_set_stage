@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+import time
+
+import rospy
+from std_msgs.msg import String
+
+
+ORDERED_STAGES = [
+    "stage0_software",
+    "stage1_ethercat_zero_output",
+    "stage2_passive_validation",
+    "stage3_single_joint",
+    "stage4_suspended_single_leg_static",
+    "stage5_suspended_double_leg_static",
+    "stage6_shadow",
+    "stage7_suspended_beyond_mimic",
+    "stage8_partial_weight_bearing",
+    "stage9_grounded_low_speed",
+]
+
+ALIASES = {
+    "0": "stage0_software",
+    "software": "stage0_software",
+    "stage0": "stage0_software",
+    "1": "stage1_ethercat_zero_output",
+    "ethercat": "stage1_ethercat_zero_output",
+    "zero": "stage1_ethercat_zero_output",
+    "stage1": "stage1_ethercat_zero_output",
+    "2": "stage2_passive_validation",
+    "passive": "stage2_passive_validation",
+    "stage2": "stage2_passive_validation",
+    "3": "stage3_single_joint",
+    "single": "stage3_single_joint",
+    "stage3": "stage3_single_joint",
+    "4": "stage4_suspended_single_leg_static",
+    "stand4": "stage4_suspended_single_leg_static",
+    "single_leg": "stage4_suspended_single_leg_static",
+    "stage4": "stage4_suspended_single_leg_static",
+    "5": "stage5_suspended_double_leg_static",
+    "stand5": "stage5_suspended_double_leg_static",
+    "double_leg": "stage5_suspended_double_leg_static",
+    "stage5": "stage5_suspended_double_leg_static",
+    "6": "stage6_shadow",
+    "shadow": "stage6_shadow",
+    "bm_shadow": "stage6_shadow",
+    "stage6": "stage6_shadow",
+    "7": "stage7_suspended_beyond_mimic",
+    "beyond_mimic": "stage7_suspended_beyond_mimic",
+    "bm_active": "stage7_suspended_beyond_mimic",
+    "stage7": "stage7_suspended_beyond_mimic",
+    "8": "stage8_partial_weight_bearing",
+    "partial": "stage8_partial_weight_bearing",
+    "stage8": "stage8_partial_weight_bearing",
+    "9": "stage9_grounded_low_speed",
+    "grounded": "stage9_grounded_low_speed",
+    "stage9": "stage9_grounded_low_speed",
+}
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Set zky_deploy_node desired_stage_name using short bringup aliases."
+    )
+    parser.add_argument(
+        "stage",
+        nargs="?",
+        help="Stage alias or full stage name, for example stand4, stand5, bm_shadow, bm_active.",
+    )
+    parser.add_argument(
+        "--node",
+        default="/zky_deploy_node",
+        help="Deploy node private namespace. Default: /zky_deploy_node.",
+    )
+    parser.add_argument(
+        "--wait",
+        action="store_true",
+        help="Wait until /zky/control_mode reports the requested current stage.",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=10.0,
+        help="Seconds to wait when --wait is used. Default: 10.",
+    )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="Print supported aliases and stages.",
+    )
+    return parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
+
+def normalize_stage(raw_stage):
+    if raw_stage is None:
+        raise ValueError("stage is required unless --list is used")
+
+    key = raw_stage.strip()
+    if key in ORDERED_STAGES:
+        return key
+
+    alias = key.lower().replace("-", "_")
+    if alias in ALIASES:
+        return ALIASES[alias]
+
+    raise ValueError("unknown stage alias or name: %s" % raw_stage)
+
+
+def stage_param_name(node_namespace):
+    namespace = node_namespace.rstrip("/")
+    if not namespace.startswith("/"):
+        namespace = "/" + namespace
+    return namespace + "/desired_stage_name"
+
+
+def print_aliases():
+    print("Stages:")
+    for stage in ORDERED_STAGES:
+        stage_aliases = sorted(alias for alias, value in ALIASES.items() if value == stage)
+        print("  %-42s %s" % (stage, ", ".join(stage_aliases)))
+
+
+def wait_for_stage(target_stage, timeout_s):
+    latest_control_mode = {"data": ""}
+
+    def callback(message):
+        latest_control_mode["data"] = message.data
+
+    subscriber = rospy.Subscriber("/zky/control_mode", String, callback, queue_size=1)
+    deadline = time.time() + timeout_s
+    rate = rospy.Rate(10)
+    needle = "stage=%s" % target_stage
+
+    while not rospy.is_shutdown() and time.time() < deadline:
+        if needle in latest_control_mode["data"]:
+            subscriber.unregister()
+            return True, latest_control_mode["data"]
+        rate.sleep()
+
+    subscriber.unregister()
+    return False, latest_control_mode["data"]
+
+
+def main():
+    args = parse_args()
+    if args.list:
+        print_aliases()
+        return 0
+
+    target_stage = normalize_stage(args.stage)
+    rospy.init_node("zky_set_stage", anonymous=True)
+
+    param_name = stage_param_name(args.node)
+    rospy.set_param(param_name, target_stage)
+    print("set %s = %s" % (param_name, target_stage))
+
+    if args.wait:
+        matched, latest = wait_for_stage(target_stage, args.timeout)
+        if matched:
+            print("current stage reached: %s" % target_stage)
+            return 0
+        print("timeout waiting for current stage: %s" % target_stage, file=sys.stderr)
+        if latest:
+            print("latest /zky/control_mode: %s" % latest, file=sys.stderr)
+        return 2
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception as exc:
+        print(str(exc), file=sys.stderr)
+        sys.exit(1)

@@ -1,0 +1,41 @@
+# Nested repository metadata
+**/.git/
+
+# Python and editor caches
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.vscode/
+
+# Training artifacts
+**/logs/
+**/outputs/
+**/checkpoints/
+**/wandb/
+*.log
+*.pt
+*.pth
+*.ckpt
+core
+core.*
+
+# Build products
+**/build/
+**/devel/
+**/install/
+*.egg-info/
+
+# Local machine and server configuration
+服务器.md
+.env
+.env.*
+*.pem
+*.key
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.7z

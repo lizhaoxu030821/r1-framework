@@ -1,0 +1,46 @@
+# 该文件定义功能调度器的语义绑定与进入条件。
+# 安全约束：任何功能都不能直接写硬件；功能只能输出候选命令，再由 CommandMux + SafetySupervisor 决定是否放行。
+
+dispatcher:
+  allow_only_one_active_function: true
+  require_exit_to_stand_hold_before_switch: true
+  warning_only_for_unimplemented_request: true
+  zero_output_estop_clears_all_functions: true
+
+functions:
+  beyond_mimic:
+    request_combo: "RB+A"
+    implemented: true
+    controller: BeyondMimicController
+    allowed_entry_states: [STAND_HOLD]
+    armed_state: BEYOND_MIMIC_ARMED
+    active_state: BEYOND_MIMIC_ACTIVE
+    require_function_guard_on_request: true
+    require_t265_verified_for_active: true
+    require_joint_sign_verified_for_active: true
+    require_shadow_cycles_without_fault: 200
+    require_clip_entry_joint_error_below_rad: 0.1
+    phase_reset_on_enter: true
+    pause_supported: true
+    resume_supported: true
+    output_route: command_mux_only
+    on_function_guard_release: none
+    on_fault: goto_passive
+
+  reserved_function_1:
+    request_combo: "RB+X"
+    implemented: false
+    warning_only: true
+    reason: "为后续功能扩展预留；当前请求只记 warning，不改变状态机。"
+
+  reserved_function_2:
+    request_combo: "RB+B"
+    implemented: false
+    warning_only: true
+    reason: "为后续功能扩展预留；当前请求只记 warning，不改变状态机。"
+
+  reserved_function_3:
+    request_combo: "RB+Y"
+    implemented: false
+    warning_only: true
+    reason: "为后续功能扩展预留；当前请求只记 warning，不改变状态机。"
